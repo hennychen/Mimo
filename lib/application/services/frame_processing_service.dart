@@ -189,7 +189,7 @@ class FrameProcessingService {
         // 每300帧输出一次状态(约每10秒)
         if (_frameCount % 300 == 0) {
           debugPrint(
-            '⚠️ Pose detection: 0 poses detected in ${_frameCount} frames (rotation=$rotation)',
+            '⚠️ Pose detection: 0 poses detected in $_frameCount frames (rotation=$rotation)',
           );
         }
         return;
@@ -197,7 +197,9 @@ class FrameProcessingService {
 
       // 检测到姿态
       _poseDetectedFrameCount++;
-      print('✅ Pose detected! Frame #$_frameCount, Landmarks: ${joints.length} (rotation=$rotation)');
+      print(
+        '✅ Pose detected! Frame #$_frameCount, Landmarks: ${joints.length} (rotation=$rotation)',
+      );
 
       // 2. 根据状态处理
       if (_state == FrameProcessingState.calibrating) {

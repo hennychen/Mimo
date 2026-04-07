@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/providers.dart';
-import '../../application/services/frame_processing_service.dart';
-import '../../data/repositories_impl/camera_repository_impl.dart';
 
 /// 摄像头预览Widget
 class CameraPreviewWidget extends ConsumerWidget {
