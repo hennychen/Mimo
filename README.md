@@ -1614,16 +1614,177 @@ compute(processFrameInIsolate, frameData);
 
 ---
 
-# 如果你下一步继续
+---
 
-我建议你直接做这两个（我可以继续帮你）：
+# 11. 设备兼容性与已知问题
 
-### 👉 1. 输出「完整 TDD 文档（接口 + 类图 UML）」
+## 11.1 相机兼容性问题
 
-### 👉 2. 给你「可运行 Flutter Demo骨架代码（含 pipeline stub）」
+### 问题描述
 
-直接说一句：
-👉 “给我 Demo骨架” 或 “继续 TDD”
+部分 Android 设备在使用 Flutter `camera` 包时遇到 CameraX 表面组合不兼容问题:
+
+```
+CameraException(IllegalArgumentException,
+  No supported surface combination is found for camera device.
+  May be attempting to bind too many use cases.
+)
+```
+
+**根本原因**: 
+- Flutter camera 插件底层使用 CameraX
+- CameraX 自动绑定 3 个用例(PREVIEW + IMAGE_CAPTURE + IMAGE_ANALYSIS)
+- 部分设备的 Camera2 API 不支持这种多用例组合
+
+### 已知受影响设备
+
+| 设备型号 | Android 版本 | 状态 |
+|---------|------------|------|
+| Redmi K40S (munch) | Android 14 | ❌ 不兼容 |
+| 部分小米/Redmi 系列 | Android 12+ | ⚠️ 需测试 |
+
+### 解决方案
+
+#### 方案 A: 更换测试设备 (推荐)
+
+**兼容性更好的设备**:
+- Google Pixel 系列 (Pixel 5+)
+- Samsung Galaxy S/Note 系列 (S20+)
+- OnePlus 设备 (8+)
+- 大多数 2022+ 的中高端设备
+
+#### 方案 B: 使用 Android 模拟器
+
+```bash
+# 创建 AVD
+flutter emulators --create [--name pixel_5]
+
+# 启动模拟器
+flutter emulators --launch <emulator_id>
+
+# 运行应用
+flutter run -d <emulator_id>
+```
+
+**优势**:
+- 开发环境即可测试
+- 可模拟不同设备配置
+- 便于调试
+
+#### 方案 C: 优雅降级 (已实施)
+
+当前应用已实现完善的错误处理和降级方案:
+- ✅ 相机初始化失败时不会崩溃
+- ✅ 显示友好的错误提示 UI
+- ✅ 允许用户跳过校准进入主页
+- ✅ 其他功能(如 Rive 动画、设置等)仍可正常使用
+
+详见: [docs/真机调试报告.md](docs/真机调试报告.md)
+
+### 技术细节
+
+**尝试过的优化方法** (均未解决):
+- ❌ 降低分辨率预设 (medium → low/VGA)
+- ❌ 移除图像格式配置
+- ❌ 升级 camera 包版本 (0.11.0 → 0.11.2)
+- ❌ 切换前后摄像头
+
+**长期解决方案** (待评估):
+- 实现原生 Camera2 API 集成 (工作量: 2-3 周)
+- 使用替代相机包 (camerawesome, mobile_scanner 等)
+- 等待 Flutter camera 插件更新
+
+## 11.2 最低系统要求
+
+### Android
+
+- **操作系统**: Android 10+ (API 29)
+- **硬件要求**:
+  - Camera2 API 支持
+  - 至少 2GB RAM
+  - CPU 主频 ≥ 1.8GHz
+  - Hardware Level FULL 或 LEVEL_3
+
+### iOS
+
+- **操作系统**: iOS 12+
+- **硬件要求**:
+  - iPhone 7+ / iPad 5th gen+
+  - 至少 2GB RAM
+
+### 推荐配置
+
+- Android 12+ / iOS 15+
+- Snapdragon 8 系列 / Exynos 2000+ / Apple A13+
+- 4GB+ RAM
+- Google Pixel / Samsung Galaxy S / iPhone 11+
+
+## 11.3 性能基准
+
+### 中端设备 (iPhone 11 / 小米 11)
+
+| 指标 | 目标值 |
+|------|--------|
+| 端到端延迟 | ≤ 120ms (P90) |
+| 推理帧率 | 20~30 FPS |
+| 渲染帧率 | 60 FPS |
+| CPU 占用 | ≤ 40% |
+| 内存占用 | ≤ 300MB |
+| 电池消耗 | ≤ 20% / 小时 |
+
+### 低端设备 (红米 9A)
+
+| 指标 | 降级目标 |
+|------|----------|
+| 推理帧率 | ≥ 15 FPS |
+| 温度上升 | ≤ 15°C (30分钟) |
+| 连续运行 | 30分钟无崩溃 |
+
+## 11.4 故障排除
+
+### 相机无法初始化
+
+**症状**: 显示"相机不可用"提示
+
+**可能原因**:
+1. 设备兼容性问题 (见 11.1)
+2. 相机权限未授予
+3. 相机被其他应用占用
+
+**解决方法**:
+1. 检查设备是否在兼容列表中
+2. 前往设置 > 应用权限 > 相机,确保已授权
+3. 关闭其他使用相机的应用
+4. 重启应用或设备
+
+### 姿态检测不准确
+
+**可能原因**:
+1. 光线不足
+2. 距离摄像头太远/太近
+3. 背景复杂或有其他人
+
+**解决方法**:
+1. 确保光线充足且均匀
+2. 站在安全框内,距离摄像头 1-2 米
+3. 选择简洁背景,确保画面中只有你一人
+
+### 应用卡顿或发热
+
+**可能原因**:
+1. 设备性能不足
+2. 长时间运行导致过热
+
+**解决方法**:
+1. 应用会自动降级性能 (降低推理频率)
+2. 休息片刻让设备降温
+3. 关闭后台其他应用
+
+---
+
+**文档版本**: v1.1 (2026-04-04)  
+**最后更新**: 2026-04-04  
+**维护者**: Mimo Development Team
 下面是基于你当前 PRD + 我们补强方案整理的 **完整 TDD（Technical Design Document）v1.0**。
 目标是：**开发可直接对照实现，无需再做架构决策**。
 

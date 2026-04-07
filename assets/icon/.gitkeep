@@ -1,0 +1,17 @@
+# Mimo 应用图标目录
+
+将以下文件放入此目录：
+
+1. **app_icon.png** (512x512 像素)
+   - 用于 iOS 应用图标
+   - 建议使用圆形或不透明背景
+
+2. **app_icon_foreground.png** (432x432 像素，居中于 512x512 画布)
+   - 用于 Android 自适应图标前景
+   - 应为透明背景
+
+生成命令：
+```
+flutter pub get
+flutter pub run flutter_launcher_icons
+```
